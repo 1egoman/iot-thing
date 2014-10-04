@@ -11,5 +11,13 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/1egoman/iot-thing.git"
+  },
+  "bugs": {
+    "url": "https://github.com/1egoman/iot-thing/issues"
+  },
+  "homepage": "https://github.com/1egoman/iot-thing"
 }
