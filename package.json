@@ -1,0 +1,15 @@
+{
+  "name": "iot-thing",
+  "description": "iot client",
+  "version": "0.0.1",
+  "dependencies": {
+    "request": "2.40.x"
+  },
+  "author": "Ryan Gaus",
+  "main": "index.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "license": "MIT"
+}
