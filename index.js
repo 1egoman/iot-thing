@@ -6,15 +6,20 @@ module.exports = function(host, port, id, structure, callback) {
   var root = this;
 
   // does the specific id specified exist on the server backend?
-  this.doesIdExist = function(id, callback) {
+  this.doesIdExist = function(id, cback) {
     request.get({
       url: "http://" + host + ":" + port + "/things/" + id + "/data",
       headers: {
         "Content-Type": "application/json"
       }
     }, function(error, response, body) {
-      body = JSON.parse(body);
-      callback( body.status != "NOHIT" );
+      if (body == undefined) {
+        // server cannot be contacted
+        callback(null, {error: "Cannot reach backend server"});
+      } else {
+        body = JSON.parse(body);
+        cback( body.status != "NOHIT" );
+      }
     });
   }
 
@@ -51,9 +56,14 @@ module.exports = function(host, port, id, structure, callback) {
             "Content-Type": "application/json"
           }
         }, function(error, response, body) {
-          body = body && JSON.parse(body);
-          root.cache = body;
-          done && done(body && body[property] || undefined);
+          if (body == undefined) {
+            // server cannot be contacted
+            callback(null, {error: "Thing no longer exists on backend server"});
+          } else {
+            body = body && JSON.parse(body);
+            root.cache = body;
+            done && done(body && body[property] || undefined);
+          }
         }
       );
     }
