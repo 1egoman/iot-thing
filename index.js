@@ -2,7 +2,7 @@ var request = require("request");
 var fs = require("fs");
 
 // the thing
-module.exports = function(host, port, id, structure, callback) {
+module.exports = function(host, port, prefs, structure, callback) {
 
   var root = this;
   this.configFile = "iot-thing-config.json";
@@ -75,7 +75,7 @@ module.exports = function(host, port, id, structure, callback) {
 
   // ran after the id is discovered
   this.idExists = function(callback) {
-    console.log(root.id)
+    data.debug && console.log(root.id)
     setInterval(function() {
       callback(root);
     }, 1000);
@@ -104,12 +104,12 @@ module.exports = function(host, port, id, structure, callback) {
     fs.readFile(this.configFile, function(err, data) {
       if (data) data = JSON.parse(data.toString());
       testId = data && data.id || id;
-      console.log("ti", testId)
+      data.debug && console.log("ti", testId)
 
 
 
       root.doesIdExist(testId, function(doesIt) {
-        console.log("doesid", doesIt)
+        data.debug && console.log("doesid", doesIt)
         if (doesIt == false) {
           root.addNewThing();
         } else {
