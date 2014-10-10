@@ -2,7 +2,7 @@ var request = require("request");
 var fs = require("fs");
 
 // the thing
-module.exports = function(host, port, prefs, structure, callback) {
+module.exports = function(host, port, data, structure, callback) {
 
   var root = this;
   this.configFile = "iot-thing-config.json";
