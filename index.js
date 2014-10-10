@@ -75,7 +75,7 @@ module.exports = function(host, port, data, structure, callback) {
 
   // ran after the id is discovered
   this.idExists = function(callback) {
-    data.debug && console.log(root.id)
+    data && data.debug && console.log(root.id)
     setInterval(function() {
       callback(root);
     }, 1000);
@@ -104,12 +104,12 @@ module.exports = function(host, port, data, structure, callback) {
     fs.readFile(this.configFile, function(err, data) {
       if (data) data = JSON.parse(data.toString());
       testId = data && data.id;
-      data.debug && console.log("ti", testId)
+      data && data.debug && console.log("ti", testId)
 
 
 
       root.doesIdExist(testId, function(doesIt) {
-        data.debug && console.log("doesid", doesIt)
+        data && data.debug && console.log("doesid", doesIt)
         if (doesIt == false) {
           root.addNewThing();
         } else {
