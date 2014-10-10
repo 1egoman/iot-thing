@@ -103,7 +103,7 @@ module.exports = function(host, port, data, structure, callback) {
   // this.refreshIdAllocation = function() {
     fs.readFile(this.configFile, function(err, data) {
       if (data) data = JSON.parse(data.toString());
-      testId = data && data.id || id;
+      testId = data && data.id;
       data.debug && console.log("ti", testId)
 
 
