@@ -75,6 +75,7 @@ module.exports = function(host, port, id, structure, callback) {
 
   // ran after the id is discovered
   this.idExists = function(callback) {
+    console.log(root.id)
     setInterval(function() {
       callback(root);
     }, 1000);
@@ -99,15 +100,17 @@ module.exports = function(host, port, id, structure, callback) {
   }
 
   // try and read config
-  this.refreshIdAllocation = function() {
+  // this.refreshIdAllocation = function() {
     fs.readFile(this.configFile, function(err, data) {
       if (data) data = JSON.parse(data.toString());
       testId = data && data.id || id;
+      console.log("ti", testId)
 
 
 
       root.doesIdExist(testId, function(doesIt) {
-        if (doesIt == false || typeof id != "number") {
+        console.log("doesid", doesIt)
+        if (doesIt == false) {
           root.addNewThing();
         } else {
           root.id = testId;
@@ -118,41 +121,41 @@ module.exports = function(host, port, id, structure, callback) {
 
 
     });
-  };
-  this.refreshIdAllocation();
+  // };
+  // this.refreshIdAllocation();
 
 }
 
-
-id = 6
-new module.exports("127.0.0.1", 8000, id, {
-  name: "Example Thing",
-  desc: "Prooves that stuff works",
-  data: {
-    message: {
-      value: "Hello World"
-    },
-    showMessage: {
-      value: false,
-      label: "Show message in terminal"
-    }
-  }
-}, function(thing) {
-  // get the thing id, and print it out
-  // console.log("Thing ID is", thing.id);
-
-  // did the user set showMessage to true?
-  thing.data.pull("showMessage", function(val) {
-    if (val.value == true) {
-      // set it to false
-      thing.data.push("showMessage", false);
-
-      // show the message in the console
-      thing.data.pull("message", function(val) {
-        console.log("Output:", val.value);
-      });
-    }
-  });
-
-
-});
+//
+// id = 6
+// new module.exports("127.0.0.1", 8000, id, {
+//   name: "Example Thing",
+//   desc: "Prooves that stuff works",
+//   data: {
+//     message: {
+//       value: "Hello World"
+//     },
+//     showMessage: {
+//       value: false,
+//       label: "Show message in terminal"
+//     }
+//   }
+// }, function(thing) {
+//   // get the thing id, and print it out
+//   // console.log("Thing ID is", thing.id);
+//
+//   // did the user set showMessage to true?
+//   thing.data.pull("showMessage", function(val) {
+//     if (val.value == true) {
+//       // set it to false
+//       thing.data.push("showMessage", false);
+//
+//       // show the message in the console
+//       thing.data.pull("message", function(val) {
+//         console.log("Output:", val.value);
+//       });
+//     }
+//   });
+//
+//
+// });
