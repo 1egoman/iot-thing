@@ -77,9 +77,12 @@ var thingFunction = function(host, port, data, structure, callback) {
   // ran after the id is discovered
   this.idExists = function(callback) {
     data && data.debug && console.log(root.id)
-    setInterval(function() {
-      callback(root);
-    }, 1000);
+    loop = function() {
+      if (callback(root) == false) {
+        clearInterval(loop);
+      }
+    }
+    setInterval(loop, 1000);
   }
 
   // add new thing
