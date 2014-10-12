@@ -2,16 +2,17 @@ var request = require("request");
 var fs = require("fs");
 
 // the thing
-module.exports = function(host, port, data, structure, callback) {
+var thingFunction = function(host, port, data, structure, callback) {
 
   var root = this;
   this.configFile = "iot-thing-config.json";
+  root.type = "things";
 
 
   // does the specific id specified exist on the server backend?
   this.doesIdExist = function(id, cback) {
     request.get({
-      url: "http://" + host + ":" + port + "/things/" + id + "/data",
+      url: "http://" + host + ":" + port + "/" + root.type + "/" + id + "/data",
       headers: {
         "Content-Type": "application/json"
       }
@@ -39,7 +40,7 @@ module.exports = function(host, port, data, structure, callback) {
 
       request.put(
         {
-          url: "http://" + host + ":" + port + "/things/" + root.id + "/data",
+          url: "http://" + host + ":" + port + "/" + root.type + "/" + root.id + "/data",
           headers: {
             "Content-Type": "application/json"
           },
@@ -54,7 +55,7 @@ module.exports = function(host, port, data, structure, callback) {
     pull: function(property, done) {
       request.get(
         {
-          url: "http://" + host + ":" + port + "/things/" + root.id + "/data",
+          url: "http://" + host + ":" + port + "/" + root.type + "/" + root.id + "/data",
           headers: {
             "Content-Type": "application/json"
           }
@@ -85,7 +86,7 @@ module.exports = function(host, port, data, structure, callback) {
   this.addNewThing = function() {
     request.post(
       {
-        url: "http://" + host + ":" + port + "/things/add",
+        url: "http://" + host + ":" + port + "/" + root.type + "/add",
         headers: {
           "Content-Type": "application/json"
         },
@@ -100,7 +101,7 @@ module.exports = function(host, port, data, structure, callback) {
   }
 
   // try and read config
-  // this.refreshIdAllocation = function() {
+  this.go = function() {
     fs.readFile(this.configFile, function(err, data) {
       if (data) data = JSON.parse(data.toString());
       testId = data && data.id;
@@ -109,7 +110,7 @@ module.exports = function(host, port, data, structure, callback) {
 
 
       root.doesIdExist(testId, function(doesIt) {
-        data && data.debug && console.log("doesid", doesIt)
+        // console.log("doesid", doesIt, testId)
         if (doesIt == false) {
           root.addNewThing();
         } else {
@@ -121,9 +122,24 @@ module.exports = function(host, port, data, structure, callback) {
 
 
     });
-  // };
-  // this.refreshIdAllocation();
+  };
 
+}
+
+// service: inherits mostly from a thing with a few subtile differences
+var serviceFunction = function(host, port, data, structure, callback) {
+  service = new thingFunction(host, port, data, structure, callback);
+  service.configFile = "iot-service-config.json";
+  service.type = "services";
+
+  this.go = function() {
+    service.go();
+  }
+};
+
+module.exports = {
+  thing: thingFunction,
+  service: serviceFunction
 }
 
 //
