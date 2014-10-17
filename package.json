@@ -1,7 +1,7 @@
 {
   "name": "iot-thing",
   "description": "iot client",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "dependencies": {
     "request": "2.40.x"
   },

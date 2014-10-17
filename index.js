@@ -7,6 +7,7 @@ var thingFunction = function(host, port, data, structure, callback) {
   var root = this;
   this.configFile = "iot-thing-config.json";
   root.type = "things";
+  root.key = data.key;
 
 
   // does the specific id specified exist on the server backend?
@@ -89,15 +90,16 @@ var thingFunction = function(host, port, data, structure, callback) {
   this.addNewThing = function() {
     request.post(
       {
-        url: "http://" + host + ":" + port + "/" + root.type + "/add",
+        url: "http://" + host + ":" + port + "/" + root.type + "/add/" + root.key,
         headers: {
           "Content-Type": "application/json"
         },
         body: JSON.stringify(structure)
       }, function(error, response, body) {
+        console.log(body)
         body = JSON.parse(body);
         root.id = body.id;
-        fs.writeFile(root.configFile, "{\"id\": "+root.id+"}");
+        root.id && fs.writeFile(root.configFile, "{\"id\": "+root.id+"}");
         root.idExists(callback);
       }
     );
