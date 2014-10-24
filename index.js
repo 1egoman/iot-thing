@@ -8,6 +8,7 @@ var thingFunction = function(host, port, data, structure, callback) {
   this.configFile = "iot-thing-config.json";
   root.type = "things";
   root.key = data.key;
+  root.serverAccessible = false;
 
 
   // does the specific id specified exist on the server backend?
@@ -20,7 +21,8 @@ var thingFunction = function(host, port, data, structure, callback) {
     }, function(error, response, body) {
       if (body == undefined) {
         // server cannot be contacted
-        callback(null, {error: "Cannot reach backend server"});
+        console.log("-> server is offline (waiting for a connection)");
+        root.loop();
       } else {
         body = JSON.parse(body);
         cback( body.status != "NOHIT" );
@@ -28,7 +30,7 @@ var thingFunction = function(host, port, data, structure, callback) {
     });
   }
 
-
+  // data manipulation functions
   this.data = {
 
     push: function(property, val, done) {
@@ -63,10 +65,13 @@ var thingFunction = function(host, port, data, structure, callback) {
         }, function(error, response, body) {
           if (body == undefined) {
             // server cannot be contacted
-            callback(null, {error: "Thing no longer exists on backend server"});
+            console.log("-> server has gone offline");
+            root.serverAccessible = false;
+            done(root.cache[property]);
           } else {
             body = body && JSON.parse(body);
             root.cache = body;
+            root.serverAccessible = true;
             done && done(body && body[property] || {value: undefined})
           }
         }
@@ -75,19 +80,51 @@ var thingFunction = function(host, port, data, structure, callback) {
 
   }
 
-  // ran after the id is discovered
+  // ran after the id is discovered, as a bridge to the main loop
   this.idExists = function(callback) {
-    data && data.debug && console.log(root.id)
+    console.log("-> connected to backend with id of %d", root.id);
+    root.serverAccessible = true;
+    this.loop();
+  }
+
+  // main loop of the app
+  this.loop = function() {
     loop = function() {
-      if (callback(root) == false) {
-        clearInterval(loop);
+      if (root.serverAccessible) {
+        // yea, the server's still out there somewhere
+        if (callback(root) == false) {
+          clearInterval(loop);
+        }
+      } else {
+        // otherwise, try and contact server
+        root.pingServer(function(error) {
+          if (error == null) {
+            // connection has been reopened
+            console.log("-> Server is back online!");
+            root.serverAccessible = true;
+          }
+        });
       }
     }
     setInterval(loop, 1000);
   }
 
+  // ping the server
+  // a simple test to see if the server is up, currently
+  this.pingServer = function(callback) {
+    request.get({
+      url: "http://" + host + ":" + port + "/" + root.type + "/all",
+      headers: {
+        "Content-Type": "application/json"
+      }
+    }, function(error, response, body) {
+      callback(error);
+    });
+  }
+
   // add new thing
   this.addNewThing = function() {
+    console.log("-> Adding new thing...");
     request.post(
       {
         url: "http://" + host + ":" + port + "/" + root.type + "/add/" + root.key,
@@ -96,11 +133,16 @@ var thingFunction = function(host, port, data, structure, callback) {
         },
         body: JSON.stringify(structure)
       }, function(error, response, body) {
-        console.log(body)
         body = JSON.parse(body);
         root.id = body.id;
-        root.id && fs.writeFile(root.configFile, "{\"id\": "+root.id+"}");
-        root.idExists(callback);
+
+        // write the id to the config
+        if (error == null && body.status == "OK") {
+          root.id && fs.writeFile(root.configFile, "{\"id\": "+root.id+"}");
+          root.idExists(callback);
+        } else {
+          console.log("-> add thing error:", body)
+        }
       }
     );
   }
@@ -110,21 +152,16 @@ var thingFunction = function(host, port, data, structure, callback) {
     fs.readFile(this.configFile, function(err, data) {
       if (data) data = JSON.parse(data.toString());
       testId = data && data.id;
-      data && data.debug && console.log("ti", testId)
 
-
-
+      // do we need to add a new thing, or reopen a pervious connection?
       root.doesIdExist(testId, function(doesIt) {
-        // console.log("doesid", doesIt, testId)
         if (doesIt == false) {
-          root.addNewThing();
+          root.addNewThing(); // new
         } else {
           root.id = testId;
-          root.idExists(callback);
+          root.idExists(callback); // continue
         }
       });
-
-
 
     });
   };
