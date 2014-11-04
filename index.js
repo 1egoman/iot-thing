@@ -1,5 +1,6 @@
 var request = require("request");
 var fs = require("fs");
+var io = require('socket.io-client');
 
 // the thing
 var thingFunction = function(host, port, data, structure, callback) {
@@ -9,6 +10,42 @@ var thingFunction = function(host, port, data, structure, callback) {
   root.type = "things";
   root.key = data.key;
   root.serverAccessible = false;
+
+  // socket cache
+  root.cache = null;
+
+  // connect to backend server websocket
+  root.socket = io("http://" + host + ":" + port);
+  root.socket.on('connect', function() {
+
+    // pull in new data from backend
+    root.socket.on("backend-data-change", function() {
+      root.updateCache();
+    });
+
+  });
+
+  // update cache from backend server
+  root.updateCache = function() {
+    request.get(
+      {
+        url: "http://" + host + ":" + port + "/" + root.type + "/" + root.id + "/data",
+        headers: {
+          "Content-Type": "application/json"
+        }
+      }, function(error, response, body) {
+        if (body == undefined) {
+          // server cannot be contacted
+          console.log("-> server has gone offline");
+          root.serverAccessible = false;
+        } else {
+          body = body && JSON.parse(body);
+          root.cache = body;
+          root.serverAccessible = true;
+        }
+      }
+    );
+  };
 
 
   // does the specific id specified exist on the server backend?
@@ -56,26 +93,7 @@ var thingFunction = function(host, port, data, structure, callback) {
 
 
     pull: function(property, done) {
-      request.get(
-        {
-          url: "http://" + host + ":" + port + "/" + root.type + "/" + root.id + "/data",
-          headers: {
-            "Content-Type": "application/json"
-          }
-        }, function(error, response, body) {
-          if (body == undefined) {
-            // server cannot be contacted
-            console.log("-> server has gone offline");
-            root.serverAccessible = false;
-            done(root.cache[property]);
-          } else {
-            body = body && JSON.parse(body);
-            root.cache = body;
-            root.serverAccessible = true;
-            done && done(body && body[property] || {value: undefined})
-          }
-        }
-      );
+      done && done(root.cache && root.cache[property] || {value: undefined});
     }
 
   }
